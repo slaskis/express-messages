@@ -5,10 +5,15 @@
  * MIT Licensed
  */
 
-module.exports = function(req, res){
+/**
+ * Module dependencies.
+ */
+var format = require('util').format;
+
+function messages(req, res){
   return function(){
     var buf = []
-      , messages = req.flash()
+      , messages = req.notify()
       , types = Object.keys(messages)
       , len = types.length;
     if (!len) return '';
@@ -28,4 +33,37 @@ module.exports = function(req, res){
     buf.push('</div>');
     return buf.join('\n');
   }
-};
+}
+
+function notify(req,res){
+  var sess = req.session;
+  if (null == sess) throw Error('req.notify() requires sessions');
+
+  return function(type, msg){
+    var msgs = sess.notifications = sess.notifications || {};
+  
+    switch (arguments.length) {
+      // flush all messages
+      case 0:
+        sess.notifications = {};
+        return msgs
+      // flush messages for a specific type
+      case 1:
+        var arr = msgs[type];
+        delete msgs[type];
+        return arr || [];
+      // set notification message
+      default:
+        var args = Array.prototype.slice.call(arguments,1);
+        msg = format.apply({},args);
+        return (msgs[type] = msgs[type] || []).push(msg);
+    }
+  }
+}
+
+module.exports = function middleware(){
+  return function(req,res,next){
+    req.notify = notify(req,res);
+    res.locals.messages = messages(req, res);
+  }
+}
