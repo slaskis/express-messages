@@ -37,7 +37,7 @@ function messages(req, res){
 
 function notify(req,res){
   var sess = req.session;
-  if (null == sess) throw Error('req.notify() requires sessions');
+  if (null == sess) throw new Error('req.notify() requires sessions');
 
   return function(type, msg){
     var msgs = sess.notifications = sess.notifications || {};
@@ -64,6 +64,7 @@ function notify(req,res){
 module.exports = function middleware(){
   return function(req,res,next){
     req.notify = notify(req,res);
-    res.locals.messages = messages(req, res);
+    res.locals.messages = messages(req,res);
+    next();
   }
 }

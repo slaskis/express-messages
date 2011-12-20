@@ -5,32 +5,28 @@
 
 var express = require('express')
   , messages = require('../')
-  , assert = require('assert');
+  , request = require('./support/http');
+
+
+var app = express();
+app.use(express.cookieParser('wahoo'))
+app.use(express.session())
+app.use(messages()) // adds req.notify() and res.locals.messages()
+app.set('views', __dirname + '/fixtures');
+
+app.get('/', function(req, res, next){
+  req.notify('info', 'info one');
+  req.notify('info', 'info two');
+  req.notify('error', 'error one');
+  res.render('messages.ejs');
+});
+
+app.get('/none', function(req, res, next){
+  res.render('messages.ejs');
+});
 
 module.exports = {
-  'test messages dynamic helper': function(){
-    var app = express.createServer(
-      express.cookieParser(),
-      express.session({ secret: 'wahoo' })
-    );
-    app.set('views', __dirname + '/fixtures');
-    app.dynamicHelpers({ messages: messages });
-    
-    app.get('/', function(req, res, next){
-      req.flash('info', 'info one');
-      req.flash('info', 'info two');
-      req.flash('error', 'error one');
-      res.render('messages.ejs', {
-        layout: false
-      });
-    });
-    
-    app.get('/none', function(req, res, next){
-      res.render('messages.ejs', {
-        layout: false
-      });
-    });
-
+  'messages should appear': function(done){
     var html = [
         '<div id="messages">'
       , '  <ul class="info">'
@@ -43,11 +39,13 @@ module.exports = {
       , '</div>'
     ].join('\n');
 
-    assert.response(app,
-      { url: '/' },
-      { body: html });
-    assert.response(app,
-      { url: '/none' },
-      { body: '' });
+    request(app)
+      .get('/')
+      .expect(html,done);
+  },
+  'messages should be empty': function(done){
+    request(app)
+      .get('/none')
+      .expect('',done)
   }
 };

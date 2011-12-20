@@ -1,5 +1,5 @@
 
 test:
-	@./node_modules/.bin/expresso --serial test/*.test.js
+	@./node_modules/.bin/mocha -R spec --ui exports
 
 .PHONY: test
