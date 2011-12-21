@@ -11,7 +11,7 @@ var express = require('express')
 var app = express();
 app.use(express.cookieParser('wahoo'))
 app.use(express.session())
-app.use(messages()) // adds req.notify() and res.locals.messages()
+app.use(messages(app)) // adds req.notify() and a `messages()` local
 app.set('views', __dirname + '/fixtures');
 
 app.get('/', function(req, res, next){

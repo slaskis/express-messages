@@ -10,8 +10,8 @@
  */
 var format = require('util').format;
 
-function messages(req, res){
-  return function(){
+function messages(req, res, next){
+  res.locals.messages = function(){
     var buf = []
       , messages = req.notify()
       , types = Object.keys(messages)
@@ -33,6 +33,7 @@ function messages(req, res){
     buf.push('</div>');
     return buf.join('\n');
   }
+  next()
 }
 
 function notify(req,res){
@@ -61,10 +62,11 @@ function notify(req,res){
   }
 }
 
-module.exports = function middleware(){
+module.exports = function middleware(app){
+  if( app )
+    app.locals.use(messages);
   return function(req,res,next){
     req.notify = notify(req,res);
-    res.locals.messages = messages(req,res);
     next();
   }
 }
